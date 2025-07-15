@@ -40,7 +40,16 @@ public class ProductService {
             query.addCriteria(new Criteria().andOperator(criteria.toArray(new Criteria[0])));
         }
         
+        // Apply sorting from pageable
+        if (pageable.getSort().isSorted()) {
+            pageable.getSort().forEach(order -> {
+                query.with(Sort.by(order.getDirection(), order.getProperty()));
+            });
+        }
+        
         long count = mongoTemplate.count(query, Product.class);
+        
+        // Apply pagination after counting total elements
         query.with(pageable);
         
         List<Product> products = mongoTemplate.find(query, Product.class);
@@ -49,6 +58,6 @@ public class ProductService {
 
     public Product getProductById(String id) {
         return productRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
     }
 }
